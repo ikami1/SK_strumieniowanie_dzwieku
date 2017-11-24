@@ -1,0 +1,3 @@
+/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles/SK_strumieniowanie_dzwieku.dir
