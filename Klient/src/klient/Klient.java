@@ -20,24 +20,24 @@ import javax.sound.sampled.SourceDataLine;
  * @author Aven
  */
 public class Klient {
-    private final static int BUFBYTESIZE = 1;
+    private final static int BUFBYTESIZE = 7056;
     private final static int PORT=41111;
     
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        try {
+        try {                     
+            //init bufora na audiostream
+            final AudioFormat format = new AudioFormat(44100F,16,2,true,false);//Definicja formatu audio: SampleRate, SampleSizeInBits, channels, signed, bigEndian,
+            final DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+            final SourceDataLine soundLine = (SourceDataLine) AudioSystem.getLine(info);
+            
             Socket sock = new Socket("127.0.0.1",PORT);//Potencjalnie zmienić String na InetAddress
             
             InputStream is = sock.getInputStream();
             
-            //init bufora na audiostream
-            final AudioFormat format = new AudioFormat(8000,8,2,false,true);//Definicja formatu audio: SampleRate, SampleSizeInBits, channels, signed, bigEndian,
-            final DataLine.Info info = new DataLine.Info(SourceDataLine.class, format, 1);
-            final SourceDataLine soundLine = (SourceDataLine) AudioSystem.getLine(info);
-            
-            int bufSize=2200;
+            int bufSize=7056;
             soundLine.open(format, bufSize);
             soundLine.start();
             
