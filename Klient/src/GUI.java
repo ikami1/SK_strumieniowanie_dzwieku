@@ -1,3 +1,21 @@
+
+import java.awt.EventQueue;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.table.DefaultTableModel;
+import klient.Klient;
+import sun.misc.IOUtils;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -8,8 +26,13 @@
  *
  * @author Aven
  */
-public class GUI extends javax.swing.JFrame {
+public class GUI extends javax.swing.JFrame{
 
+    private static Boolean autoodswiezanie;
+    private static Klient k;
+    private static EventQueue qObl;
+    private static EventQueue qUi;
+    
     /**
      * Creates new form GUI
      */
@@ -26,37 +49,30 @@ public class GUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jFrame1 = new javax.swing.JFrame();
         jFileChooser1 = new javax.swing.JFileChooser();
         jButton1 = new javax.swing.JButton();
         jToggleButton1 = new javax.swing.JToggleButton();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         jButton2 = new javax.swing.JButton();
         jCheckBox1 = new javax.swing.JCheckBox();
+        jButton3 = new javax.swing.JButton();
 
-        javax.swing.GroupLayout jFrame1Layout = new javax.swing.GroupLayout(jFrame1.getContentPane());
-        jFrame1.getContentPane().setLayout(jFrame1Layout);
-        jFrame1Layout.setHorizontalGroup(
-            jFrame1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jFrame1Layout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addComponent(jFileChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(21, Short.MAX_VALUE))
-        );
-        jFrame1Layout.setVerticalGroup(
-            jFrame1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jFrame1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jFileChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(16, Short.MAX_VALUE))
-        );
+        jFileChooser1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jFileChooser1ActionPerformed(evt);
+            }
+        });
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Odtwarzacz");
+        setMinimumSize(new java.awt.Dimension(744, 551));
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
+            }
+        });
 
         jButton1.setText("Przeslij utwor");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -66,50 +82,63 @@ public class GUI extends javax.swing.JFrame {
         });
 
         jToggleButton1.setText("Polacz");
-
-        jLabel1.setText("Status:");
-
-        jLabel2.setText("x");
-
-        jTextField1.setText("jTextField1");
+        jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButton1ActionPerformed(evt);
+            }
+        });
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null}
             },
             new String [] {
-                "Numer", "Od kogo", "Nazwa"
+                "Numer", "Czas trwania", "Nazwa"
             }
         ) {
+            Class[] types = new Class [] {
+                java.lang.Integer.class, java.lang.String.class, java.lang.String.class
+            };
             boolean[] canEdit = new boolean [] {
                 false, false, false
             };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
             }
         });
+        jTable1.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         jScrollPane1.setViewportView(jTable1);
 
         jButton2.setText("Odswiez");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jCheckBox1.setText("Autoodswiezanie");
+        jCheckBox1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jCheckBox1MouseClicked(evt);
+            }
+        });
+
+        jButton3.setText("Wybierz");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(40, 40, 40)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 678, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jToggleButton1)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel2)))
-                .addContainerGap(26, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -118,10 +147,18 @@ public class GUI extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(jButton2))
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(jButton3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(jButton1)))
                 .addGap(46, 46, 46))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(40, 40, 40)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 678, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jToggleButton1))
+                .addGap(26, 26, 26))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -129,26 +166,126 @@ public class GUI extends javax.swing.JFrame {
                 .addGap(45, 45, 45)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton3))
                 .addGap(12, 12, 12)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jToggleButton1)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2)
                     .addComponent(jButton2)
                     .addComponent(jCheckBox1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 403, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(35, 35, 35))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+        WysylanieUtworu ws=new WysylanieUtworu(jTextField1.getText());
+        //ws.run();
+        qObl.invokeLater(ws);
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        int efekt=jFileChooser1.showOpenDialog(this);
+        this.setEnabled(false);
+        if(efekt==javax.swing.JFileChooser.APPROVE_OPTION){
+            File plik=jFileChooser1.getSelectedFile();
+            jTextField1.setText(plik.getAbsolutePath());
+            this.setEnabled(true);
+        }else if(efekt==javax.swing.JFileChooser.CANCEL_OPTION){
+            this.setEnabled(true);
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jFileChooser1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFileChooser1ActionPerformed
+        /*int co=jFileChooser1.show
+        if () {
+            File file = jFileChooser1.getSelectedFile();
+        }*/
+    }//GEN-LAST:event_jFileChooser1ActionPerformed
+
+    private void jCheckBox1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jCheckBox1MouseClicked
+        synchronized(autoodswiezanie){
+            autoodswiezanie=!autoodswiezanie;
+            jButton2.setEnabled(!autoodswiezanie);
+        }
+    }//GEN-LAST:event_jCheckBox1MouseClicked
+
+    private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
+        k.changeStatus();
+    }//GEN-LAST:event_jToggleButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        qObl.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                odswiez();
+            }
+        });
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        k.changeStatus();
+    }//GEN-LAST:event_formWindowClosed
+
+    private void odswiez(){
+        int PORT=41112;
+        try {
+            Socket sock = new Socket("192.168.2.54",PORT);
+            OutputStream os = sock.getOutputStream();
+            String s="2";
+            os.write(s.getBytes("UTF-8"));
+            InputStream is = sock.getInputStream();
+            BufferedInputStream bis = new BufferedInputStream(is);
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            DataInputStream dis = new DataInputStream(is);
+            int ile=dis.readInt();
+            DefaultTableModel mod=(DefaultTableModel)jTable1.getModel();
+            for(int i=0;i<ile;i++){
+                int licz=0;
+                int wyn=bis.read();
+                while((wyn!=-1)&&(licz<100)){
+                    buf.write((byte)wyn);
+                    wyn=bis.read();
+                    licz++;
+                }
+                String nazwa=buf.toString("UTF-8");
+                if(i==0){
+                    jTable1.setValueAt(1, 0, 0);
+                    jTable1.setValueAt("x", 0, 1);
+                    jTable1.setValueAt(nazwa, 0, 2);
+                }else{
+                    mod.addRow(new Object[]{i+1, "x", nazwa});
+                }
+            }
+            sock.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    private void autoodswiezaj(){
+        while(true){
+            synchronized(autoodswiezanie){
+                if(autoodswiezanie){
+                    qObl.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            odswiez();
+                        }
+                    });
+                }
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -177,21 +314,24 @@ public class GUI extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        qObl=new EventQueue();
+        qUi=new EventQueue();
+        qUi.invokeLater(new Runnable() {
             public void run() {
+                autoodswiezanie=false;
                 new GUI().setVisible(true);
             }
         });
+        k=new Klient();
+        k.start();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JFileChooser jFileChooser1;
-    private javax.swing.JFrame jFrame1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JTextField jTextField1;
