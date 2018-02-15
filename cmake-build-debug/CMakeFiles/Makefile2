@@ -66,7 +66,7 @@ CMAKE_BINARY_DIR = /home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-bu
 CMakeFiles/SK_strumieniowanie_dzwieku.dir/all:
 	$(MAKE) -f CMakeFiles/SK_strumieniowanie_dzwieku.dir/build.make CMakeFiles/SK_strumieniowanie_dzwieku.dir/depend
 	$(MAKE) -f CMakeFiles/SK_strumieniowanie_dzwieku.dir/build.make CMakeFiles/SK_strumieniowanie_dzwieku.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles --progress-num=1,2 "Built target SK_strumieniowanie_dzwieku"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles --progress-num=1,2,3 "Built target SK_strumieniowanie_dzwieku"
 .PHONY : CMakeFiles/SK_strumieniowanie_dzwieku.dir/all
 
 # Include target in all.
@@ -76,7 +76,7 @@ all: CMakeFiles/SK_strumieniowanie_dzwieku.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/SK_strumieniowanie_dzwieku.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles 3
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/SK_strumieniowanie_dzwieku.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles 0
 .PHONY : CMakeFiles/SK_strumieniowanie_dzwieku.dir/rule

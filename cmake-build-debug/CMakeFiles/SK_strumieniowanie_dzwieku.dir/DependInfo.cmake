@@ -4,6 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/functions.cpp" "/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles/SK_strumieniowanie_dzwieku.dir/functions.cpp.o"
   "/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/main.cpp" "/home/ikami/CLionProjects/SK_strumieniowanie_dzwieku/cmake-build-debug/CMakeFiles/SK_strumieniowanie_dzwieku.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")

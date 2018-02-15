@@ -1,201 +1,6 @@
-#include <iostream>
-#include <fstream>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <csignal>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <arpa/inet.h>
-#include <ctime>
-#include <thread>
-#include <algorithm>
+#include "functions.cpp"
 
-#define SERVER_PORT 41111
-#define SERVER_PORT_INPUT 41112
-#define QUEUE_SIZE 5
-#define BUFSIZE 1024
-#define TITLE_SIZE 100
-
-
-using namespace std;
-
-/**************** TCP ****************/
-void Sumuj(int* socket) {
-    int nClientSocket = *socket;
-    //std::cout<<"[connection from " << inet_ntoa((struct in_addr)stClientAddr.sin_addr)<<std::endl;
-    std::cout<<"Nowe polaczenie"<<std::endl;
-
-
-    filebuf *pbuf;
-    ifstream sourcestr;
-    long size;
-    char * buffer;
-    long ile_wyslane = 0;
-
-    sourcestr.open("./Brooklynska_rada_zydow.wav", ios::in | ios::binary);
-    if (!sourcestr.good()) {
-        cout<<"Blad otwarcia pliku zrodlowego"<<endl;
-        exit(EXIT_FAILURE);
-    }
-
-    // get pointer to associated buffer object
-    pbuf=sourcestr.rdbuf();
-
-    // get file size using buffer's members
-    size=pbuf->pubseekoff (0,ios::end,ios::in);
-    // set seek position to 0
-    pbuf->pubseekpos (0,ios::in);
-
-    // allocate memory to contain file data
-    buffer=new char[BUFSIZE];
-
-    while(ile_wyslane < size/10){
-        // set seek position to ile_wyslane
-        pbuf->pubseekpos (ile_wyslane,ios::in);
-
-        // get file data
-        pbuf->sgetn (buffer,BUFSIZE);
-
-        ile_wyslane += write(nClientSocket, buffer, BUFSIZE);
-
-    }
-    sourcestr.close();
-
-    /*ile_wyslane = 0;
-
-    sourcestr.open("./audio/Wynik.wav", ios::in | ios::binary);
-    if (!sourcestr.good()) {
-        cout<<"Blad otwarcia pliku zrodlowego"<<endl;
-        exit(EXIT_FAILURE);
-    }
-
-    // get pointer to associated buffer object
-    pbuf=sourcestr.rdbuf();
-
-    // get file size using buffer's members
-    size=pbuf->pubseekoff (0,ios::end,ios::in);
-    // set seek position to 0
-    pbuf->pubseekpos (0,ios::in);
-
-    // allocate memory to contain file data
-    buffer=new char[BUFSIZE];
-
-    while(ile_wyslane < size){
-        // set seek position to ile_wyslane
-        pbuf->pubseekpos (ile_wyslane,ios::in);
-
-        // get file data
-        pbuf->sgetn (buffer,BUFSIZE);
-
-        ile_wyslane += write(nClientSocket, buffer, BUFSIZE);
-
-    }
-    sourcestr.close();*/
-
-    close(nClientSocket);
-}
-
-
-// ##################### UDP #####################
-/*void Sumuj(int* socket, sockaddr_in* stClientAddr) {
-    int nClientSocket = *socket;
-    sockaddr_in stClient = *stClientAddr;
-    std::cout<<"[connection from " << inet_ntoa((struct in_addr)stClient.sin_addr)<<std::endl;
-
-
-    filebuf *pbuf;
-    ifstream sourcestr;
-    long size;
-    char * buffer;
-    long ile_wyslane = 0;
-
-    sourcestr.open("./Brooklynska_rada_zydow.wav", ios::in | ios::binary);
-    if (!sourcestr.good()) {
-        cout<<"Blad otwarcia pliku zrodlowego"<<endl;
-        exit(EXIT_FAILURE);
-    }
-
-    // get pointer to associated buffer object
-    pbuf=sourcestr.rdbuf();
-
-    // get file size using buffer's members
-    size=pbuf->pubseekoff (0,ios::end,ios::in);
-    // set seek position to 0
-    pbuf->pubseekpos (0,ios::in);
-
-    // allocate memory to contain file data
-    buffer=new char[BUFSIZE];
-
-    while(ile_wyslane < size){
-        // set seek position to ile_wyslane
-        pbuf->pubseekpos (ile_wyslane,ios::in);
-
-        // get file data
-        pbuf->sgetn (buffer,BUFSIZE);
-
-        ile_wyslane += sendto(nClientSocket, buffer, BUFSIZE, 0, (struct sockaddr*) &stClient, sizeof stClient);
-        //ile_wyslane += write(nClientSocket, buffer, BUFSIZE);
-
-    }
-    sourcestr.close();
-
-    close(nClientSocket);
-}*/
-
-void setUpOutputSocket (int* nSocket, sockaddr_in stAddr){
-    int nListen, nBind;
-    int nFoo = 1;
-
-    *nSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (*nSocket < 0){
-        perror ("Can't create a socket.");
-        exit (EXIT_FAILURE);
-    }
-    setsockopt(*nSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&nFoo, sizeof(nFoo));
-
-    nBind = bind(*nSocket, (struct sockaddr*)&stAddr, sizeof(struct sockaddr));
-    if (nBind < 0){
-        perror ("Can't bind a name to a socket");
-        exit (EXIT_FAILURE);
-    }
-
-    nListen = listen(*nSocket, QUEUE_SIZE);
-    if (nListen < 0) {
-        perror ("Can't set queue size.");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void setUpInputSocket (int* nSocket, sockaddr_in stAddr){
-    int nListen, nBind;
-    int nFoo = 1;
-
-    *nSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (*nSocket < 0){
-        perror ("Can't create an input socket.");
-        exit (EXIT_FAILURE);
-    }
-    setsockopt(*nSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&nFoo, sizeof(nFoo));
-
-    nBind = bind(*nSocket, (struct sockaddr*)&stAddr, sizeof(struct sockaddr));
-    if (nBind < 0){
-        perror ("Can't bind a name to an input socket");
-        exit (EXIT_FAILURE);
-    }
-
-    nListen = listen(*nSocket, QUEUE_SIZE);
-    if (nListen < 0) {
-        perror ("Can't set queue size for input socket.");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void listenCommands (int* listenSocket){
+void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
     int socket = *listenSocket;
 
     struct sockaddr_in stClientAdr;
@@ -203,7 +8,7 @@ void listenCommands (int* listenSocket){
     socklen_t nTmp = sizeof(struct sockaddr);
     long ile_odebrane;
     char * buffer;
-    char * name_of_file = nullptr;
+    char * name_of_file = new char[TITLE_SIZE];
 
     while(1){
         *nClientSocket = accept(socket, (struct sockaddr*)&stClientAdr, &nTmp);
@@ -248,8 +53,6 @@ void listenCommands (int* listenSocket){
             /*********************************/
             /****** read name of file ********/
 
-            name_of_file = new char[TITLE_SIZE];
-
             int odebrane = read(*nClientSocket, name_of_file, TITLE_SIZE);
             if (odebrane == 0){
                 cout << "Client disconnected, end of downloading audio" << endl;
@@ -257,9 +60,11 @@ void listenCommands (int* listenSocket){
                 break;
             }
             if (odebrane == -1){
-                perror ("Can't read file.");
+                perror ("Can't read title.");
                 exit(EXIT_FAILURE);
             }
+
+            listOfTitles->push_back(new TitleOfAudio(name_of_file));
 
             /*********************************/
             /******* read audio file *********/
@@ -300,9 +105,35 @@ void listenCommands (int* listenSocket){
 
         //TO DO wyslac ilosc tytulow i tyle razy tytul po 100 bajtow
         if (command == '2'){
-            int ile = write(*nClientSocket, name_of_file, TITLE_SIZE);
+            int size = htonl(listOfTitles->size());
+            int wyslane = write(*nClientSocket, &size, sizeof(int));
+            if (wyslane == 0){
+                cout << "Client disconnected, I'm stopping sending number of titles" << endl;
+                close(*nClientSocket);
+                break;
+            }
+            if (wyslane == -1){
+                perror ("Can't write number of titles.");
+                exit(EXIT_FAILURE);
+            }
 
-            cout << "Wyslalem " << ile << endl;
+            cout << "Wysylam " << ntohl(size) << " tytulow do klienta" << endl;
+
+            for (list<TitleOfAudio*>::const_iterator iterator = listOfTitles->begin(), end = listOfTitles->end(); iterator != end; ++iterator) {
+                wyslane = write(*nClientSocket, (*iterator)->getTitle(), TITLE_SIZE);
+                if (wyslane == 0){
+                    cout << "Client disconnected, I'm stopping sending titles" << endl;
+                    close(*nClientSocket);
+                    break;
+                }
+                if (wyslane == -1){
+                    perror ("Can't write title.");
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            cout << "Wyslalem " << ntohl(size) << " tytulow do klienta" << endl;
+
         }
 
         close(*nClientSocket);
@@ -311,16 +142,12 @@ void listenCommands (int* listenSocket){
     close(*nClientSocket);
 }
 
-void exitProgram (int sig){
-    cout << endl << "Ctrl+C, zamykam serwer" << endl;
-    exit(0);
-}
-
 
 int main() {
     int nSocket, inputSocket;
     socklen_t nTmp;
     struct sockaddr_in stAddr, stAddrInput, stClientAddr;
+    list<TitleOfAudio*> listOfTitles;
 
 
     /******************************************************************/
@@ -344,7 +171,7 @@ int main() {
 
     setUpInputSocket(&inputSocket, stAddrInput);
 
-    thread listen_socket (listenCommands, &inputSocket );
+    thread listen_socket (listenCommands, &inputSocket, &listOfTitles );
 
     // Catch ctrl+C
     signal(SIGINT, exitProgram);
@@ -359,7 +186,7 @@ int main() {
             exit(EXIT_FAILURE);
         }
 
-        thread second (Sumuj,nClientSocket);
+        thread second (streamuj, nClientSocket);
         second.detach();
     }
 
@@ -373,7 +200,7 @@ int main() {
             exit(EXIT_FAILURE);
         }
 
-        thread second (Sumuj,&nSocket, &stClientAddr);
+        thread second (streamuj, &nSocket, &stClientAddr);
         second.detach();
     }*/
 
