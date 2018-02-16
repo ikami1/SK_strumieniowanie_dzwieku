@@ -233,18 +233,18 @@ public class GUI extends javax.swing.JFrame{
     private void odswiez(){
         int PORT=41112;
         try {
-            Socket sock = new Socket("192.168.2.54",PORT);
+            Socket sock = new Socket("127.0.0.1",PORT);
             OutputStream os = sock.getOutputStream();
             String s="2";
             os.write(s.getBytes("UTF-8"));
             InputStream is = sock.getInputStream();
             BufferedInputStream bis = new BufferedInputStream(is);
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
             DataInputStream dis = new DataInputStream(is);
             int ile=dis.readInt();
             DefaultTableModel mod=(DefaultTableModel)jTable1.getModel();
-            mod.setRowCount(0);
+            mod.setRowCount(1);
             for(int i=0;i<ile;i++){
+                ByteArrayOutputStream buf = new ByteArrayOutputStream();
                 int licz=0;
                 int wyn=bis.read();
                 while((wyn!=-1)&&(licz<100)){
@@ -260,6 +260,7 @@ public class GUI extends javax.swing.JFrame{
                 }else{
                     mod.addRow(new Object[]{i+1, "x", nazwa});
                 }
+                buf.close();
             }
             sock.close();
         } catch (IOException ex) {
