@@ -48,7 +48,15 @@ public class WysylanieUtworu implements Runnable{
             BufferedInputStream in = new BufferedInputStream(fis);
             os.write(s.getBytes("UTF-8"));
             ds.writeInt((int)plik.length());
-            os.write(plik.getName().getBytes("UTF-8"));
+            byte tab[] = new byte[100];
+            byte temp[]=plik.getName().getBytes("UTF-8");
+            for(int i=0;i<100;i++){
+                if(i<=temp.length)
+                    tab[i]=temp[i];
+                else
+                    tab[i]=' ';
+            }
+            os.write(tab);
             while((licz=in.read(plikBuf))>0){
                 os.write(plikBuf);
             }

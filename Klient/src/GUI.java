@@ -243,6 +243,7 @@ public class GUI extends javax.swing.JFrame{
             DataInputStream dis = new DataInputStream(is);
             int ile=dis.readInt();
             DefaultTableModel mod=(DefaultTableModel)jTable1.getModel();
+            mod.setRowCount(0);
             for(int i=0;i<ile;i++){
                 int licz=0;
                 int wyn=bis.read();
