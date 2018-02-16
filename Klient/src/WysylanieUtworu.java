@@ -33,7 +33,7 @@ public class WysylanieUtworu implements Runnable{
     @Override
     public void run() {
         try {
-            Socket sock = new Socket("192.168.2.54",PORT);
+            Socket sock = new Socket("127.0.0.1",PORT);
             OutputStream os = sock.getOutputStream();
             DataOutputStream ds= new DataOutputStream(os);
             File plik;
@@ -51,7 +51,7 @@ public class WysylanieUtworu implements Runnable{
             byte tab[] = new byte[100];
             byte temp[]=plik.getName().getBytes("UTF-8");
             for(int i=0;i<100;i++){
-                if(i<=temp.length)
+                if(i<temp.length)
                     tab[i]=temp[i];
                 else
                     tab[i]=' ';
