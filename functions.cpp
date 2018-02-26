@@ -1,8 +1,5 @@
 #include "functions.h"
 
-
-
-
 /**************** TCP ****************/
 void streamuj(int* socket) {
     int nClientSocket = *socket;
@@ -16,7 +13,7 @@ void streamuj(int* socket) {
     char * buffer;
     long ile_wyslane = 0;
 
-    sourcestr.open("./Brooklynska_rada_zydow.wav", ios::in | ios::binary);
+    sourcestr.open("./Ghost Ship of Cannibal Rats (online-audio-converter.com).wav", ios::in | ios::binary);
     if (!sourcestr.good()) {
         cout<<"Blad otwarcia pliku zrodlowego"<<endl;
         exit(EXIT_FAILURE);
@@ -33,7 +30,7 @@ void streamuj(int* socket) {
     // allocate memory to contain file data
     buffer=new char[BUFSIZE];
 
-    while(ile_wyslane < size/5){
+    while(ile_wyslane < size/2){
         // set seek position to ile_wyslane
         pbuf->pubseekpos (ile_wyslane,ios::in);
 
@@ -72,6 +69,14 @@ void streamuj(int* socket) {
         pbuf->sgetn (buffer,BUFSIZE);
 
         ile_wyslane += write(nClientSocket, buffer, BUFSIZE);
+        if (ile_wyslane == -1){
+            cout<<"Error during streaming " << endl;
+            exit(EXIT_FAILURE);
+        }
+        if (ile_wyslane == 0){
+            cout<<"Client disconnected " << endl;
+            break;
+        }
 
     }
     sourcestr.close();
@@ -79,51 +84,23 @@ void streamuj(int* socket) {
     close(nClientSocket);
 }
 
-// ##################### UDP #####################
-/*void streamuj(int* socket, sockaddr_in* stClientAddr) {
-    int nClientSocket = *socket;
-    sockaddr_in stClient = *stClientAddr;
-    std::cout<<"[connection from " << inet_ntoa((struct in_addr)stClient.sin_addr)<<std::endl;
-
-
-    filebuf *pbuf;
-    ifstream sourcestr;
-    long size;
-    char * buffer;
+void streamujj(Job job) {
+    int nClientSocket = job.socket;
     long ile_wyslane = 0;
 
-    sourcestr.open("./Brooklynska_rada_zydow.wav", ios::in | ios::binary);
-    if (!sourcestr.good()) {
-        cout<<"Blad otwarcia pliku zrodlowego"<<endl;
-        exit(EXIT_FAILURE);
+    while(ile_wyslane < BUFSIZE){
+        ile_wyslane += write(nClientSocket, job.content+ile_wyslane, BUFSIZE-ile_wyslane);
+        if (ile_wyslane == -1){
+            cout<<"Error during streaming " << endl;
+            exit(EXIT_FAILURE);
+        }
+        if (ile_wyslane == 0) {
+            cout << "Client disconnected " << endl;
+            close(nClientSocket);
+            break;
+        }
     }
-
-    // get pointer to associated buffer object
-    pbuf=sourcestr.rdbuf();
-
-    // get file size using buffer's members
-    size=pbuf->pubseekoff (0,ios::end,ios::in);
-    // set seek position to 0
-    pbuf->pubseekpos (0,ios::in);
-
-    // allocate memory to contain file data
-    buffer=new char[BUFSIZE];
-
-    while(ile_wyslane < size){
-        // set seek position to ile_wyslane
-        pbuf->pubseekpos (ile_wyslane,ios::in);
-
-        // get file data
-        pbuf->sgetn (buffer,BUFSIZE);
-
-        ile_wyslane += sendto(nClientSocket, buffer, BUFSIZE, 0, (struct sockaddr*) &stClient, sizeof stClient);
-        //ile_wyslane += write(nClientSocket, buffer, BUFSIZE);
-
-    }
-    sourcestr.close();
-
-    close(nClientSocket);
-}*/
+}
 
 void setUpOutputSocket (int* nSocket, sockaddr_in stAddr){
     int nListen, nBind;

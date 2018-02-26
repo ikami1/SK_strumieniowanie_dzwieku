@@ -18,6 +18,12 @@
 #include <thread>
 #include <algorithm>
 #include <list>
+#include <queue>
+#include <vector>
+#include <string>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 
 #define SERVER_PORT 41111
 #define SERVER_PORT_INPUT 41112
@@ -28,22 +34,28 @@
 using namespace std;
 
 class TitleOfAudio{
-
     char title[TITLE_SIZE];
-
 public:
     char* getTitle(){ return title;}
 
     TitleOfAudio( char* title ) {
-        strncpy ( title, this->title, TITLE_SIZE );
+        strncpy ( this->title, title, TITLE_SIZE );
     }
-
 };
+
+class Job{
+public:
+    int socket;
+    char content[BUFSIZE];
+};
+
+condition_variable condition;
+queue<Job> jobQueue;
+mutex Queue_Mutex;
 
 /*** TCP ***/
 void streamuj(int* socket);
-/*** UDP ***/
-//void streamuj(int* socket, sockaddr_in* stClientAddr);
+void streamujj(Job job);
 
 void setUpOutputSocket (int* nSocket, sockaddr_in stAddr);
 void setUpInputSocket (int* nSocket, sockaddr_in stAddr);

@@ -1,6 +1,6 @@
 #include "functions.cpp"
 
-void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
+void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles, int* last_number){
     int socket = *listenSocket;
 
     struct sockaddr_in stClientAdr;
@@ -10,7 +10,7 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
     char * buffer;
     char * name_of_file = new char[TITLE_SIZE];
 
-    while(1){
+    while(true){
         *nClientSocket = accept(socket, (struct sockaddr*)&stClientAdr, &nTmp);
         if (nClientSocket < 0) {
             perror ("Can't create a connection's socket. Error in listen commands");
@@ -34,7 +34,7 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
         /******* read new file *********/
 
         if ( command == '1'){
-            int sizeOfFile;
+            uint sizeOfFile;
             ile_odebrane = read(*nClientSocket, &sizeOfFile, sizeof(int));
             if (ile_odebrane == 0){
                 cout << "Client disconnected before sending size of file" << endl;
@@ -53,9 +53,9 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
             /*********************************/
             /****** read name of file ********/
 
-            int odebrane = read(*nClientSocket, name_of_file, TITLE_SIZE);
+            ssize_t odebrane = read(*nClientSocket, name_of_file, TITLE_SIZE);
             if (odebrane == 0){
-                cout << "Client disconnected, end of downloading audio" << endl;
+                cout << "Client disconnected, cant download title" << endl;
                 close(*nClientSocket);
                 break;
             }
@@ -80,7 +80,7 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
 
             while (ile_odebrane < sizeOfFile){
 
-                int odebrane = read(*nClientSocket, buffer, BUFSIZE);
+                odebrane = read(*nClientSocket, buffer, BUFSIZE);
                 if (odebrane == 0){
                     cout << "Client disconnected, end of downloading audio" << endl;
                     close(*nClientSocket);
@@ -97,16 +97,16 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
             }
 
             desstr.close();
+            (*last_number)++;
             cout << "Plik dodany do kolejki" << endl;
         }
 
         /*****************************/
         /******* send titles *********/
 
-        //TO DO wyslac ilosc tytulow i tyle razy tytul po 100 bajtow
         if (command == '2'){
-            int size = htonl(listOfTitles->size());
-            int wyslane = write(*nClientSocket, &size, sizeof(int));
+            uint size = htonl(listOfTitles->size());
+            ssize_t wyslane = write(*nClientSocket, &size, sizeof(int));
             if (wyslane == 0){
                 cout << "Client disconnected, I'm stopping sending number of titles" << endl;
                 close(*nClientSocket);
@@ -121,6 +121,7 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
 
             for (list<TitleOfAudio*>::const_iterator iterator = listOfTitles->begin(), end = listOfTitles->end(); iterator != end; ++iterator) {
                 wyslane = write(*nClientSocket, (*iterator)->getTitle(), TITLE_SIZE);
+                cout << "Wyslany tytul: " << (*iterator)->getTitle() << endl;
                 if (wyslane == 0){
                     cout << "Client disconnected, I'm stopping sending titles" << endl;
                     close(*nClientSocket);
@@ -139,15 +140,102 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles){
         close(*nClientSocket);
     }
 
+    delete name_of_file, buffer;
     close(*nClientSocket);
 }
 
+void Infinite_loop_function() {
+    Job job;
+    while (true) {
+        {
+            unique_lock<mutex> lock(Queue_Mutex);
+
+            condition.wait(lock, [] { return !jobQueue.empty(); });
+            job = jobQueue.front();
+            jobQueue.pop();
+        }
+        streamujj(job);
+    }
+}
+
+void Add_Job(int *actual_number, int* last_number, vector<int> *sockets) {
+    Job job;
+    while(true){
+        if(*actual_number <= *last_number){
+            filebuf *pbuf;
+            ifstream sourcestr;
+            long size;
+            char buffer[BUFSIZE];
+            int ile_wyslane = 0;
+
+            sourcestr.open("./audio/" + to_string(*actual_number) + ".wav", ios::in | ios::binary);
+            if (!sourcestr.good()) {
+                cout<<"Blad otwarcia pliku zrodlowego"<<endl;
+                exit(EXIT_FAILURE);
+            }
+
+            // get pointer to associated buffer object
+            pbuf=sourcestr.rdbuf();
+
+            // get file size using buffer's members
+            size=pbuf->pubseekoff (0,ios::end,ios::in);
+            // set seek position to 0
+            pbuf->pubseekpos (0,ios::in);
+
+            while(ile_wyslane < size){
+                if (jobQueue.size() < 10){
+                    // set seek position to ile_wyslane
+                    pbuf->pubseekpos (ile_wyslane,ios::in);
+
+                    // get file data
+                    pbuf->sgetn (buffer,BUFSIZE);
+
+                    strncpy ( job.content, buffer, BUFSIZE );
+
+                    for (std::vector<int>::iterator it = (*sockets).begin() ; it != (*sockets).end(); ++it) {
+                        job.socket = *it;
+                        {
+                            unique_lock<mutex> lock(Queue_Mutex);
+                            jobQueue.push(job);
+                            //cout<<"nowy job "<<job.content<<endl;
+                        }
+                        condition.notify_one();
+                    }
+                } else{
+                    this_thread::sleep_for(chrono::milliseconds(500));
+                }
+
+            }
+            sourcestr.close();
+            (*actual_number)++;
+        }
+        else{
+            this_thread::sleep_for(chrono::milliseconds(500));
+        };
+    }
+}
 
 int main() {
     int nSocket, inputSocket;
     socklen_t nTmp;
     struct sockaddr_in stAddr, stAddrInput, stClientAddr;
     list<TitleOfAudio*> listOfTitles;
+    vector<int> sockets;
+
+    int actual_number = 1, last_number = 0;
+
+    /***** New jobs *****/
+
+    //thread jobs (Add_Job, &actual_number, &last_number, &sockets);
+    //jobs.detach();
+
+    /***** Streaming threads *****/
+
+    int Num_Threads = thread::hardware_concurrency();
+    //cout<<"Liczba wspieranych watkow: "<< Num_Threads << endl;
+    vector<thread> pool;
+    //for(int i = 0; i < Num_Threads-3; i++)
+    //{  pool.push_back(thread(Infinite_loop_function));}
 
 
     /******************************************************************/
@@ -171,7 +259,8 @@ int main() {
 
     setUpInputSocket(&inputSocket, stAddrInput);
 
-    thread listen_socket (listenCommands, &inputSocket, &listOfTitles );
+    thread listen_socket (listenCommands, &inputSocket, &listOfTitles, &last_number );
+    listen_socket.detach();
 
     // Catch ctrl+C
     signal(SIGINT, exitProgram);
@@ -186,23 +275,12 @@ int main() {
             exit(EXIT_FAILURE);
         }
 
+        //cout<<"Nowe polaczenie"<<endl;
+        //sockets.push_back(*nClientSocket);
+
         thread second (streamuj, nClientSocket);
         second.detach();
     }
-
-    /*while(1){
-        nTmp = sizeof(struct sockaddr);
-
-        int sample_message;
-        int return_val = recvfrom(nSocket, &sample_message, sizeof(int), 0, (struct sockaddr*)&stClientAddr, &nTmp);
-        if (return_val < 0) {
-            perror ("Can't create a connection's socket.");
-            exit(EXIT_FAILURE);
-        }
-
-        thread second (streamuj, &nSocket, &stClientAddr);
-        second.detach();
-    }*/
 
     return 0;
 }
