@@ -54,6 +54,7 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles, int* 
             /****** read name of file ********/
 
             ssize_t odebrane = read(*nClientSocket, name_of_file, TITLE_SIZE);
+            cout<<odebrane<<endl;
             if (odebrane == 0){
                 cout << "Client disconnected, cant download title" << endl;
                 close(*nClientSocket);
@@ -72,7 +73,7 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles, int* 
             ofstream desstr;
             filebuf *pbuf;
 
-            desstr.open("./audio/Wynik.wav", ios::out | ios::binary);
+            desstr.open("./audio/" + to_string((*last_number) + 1) + ".wav", ios::out | ios::binary);
             // get pointer to associated buffer object
             pbuf=desstr.rdbuf();
             // set seek position to 0
@@ -161,7 +162,7 @@ void Infinite_loop_function() {
 void Add_Job(int *actual_number, int* last_number, vector<int> *sockets) {
     Job job;
     while(true){
-        if(*actual_number <= *last_number){
+        if(*actual_number <= *last_number && !sockets->empty()){
             filebuf *pbuf;
             ifstream sourcestr;
             long size;
@@ -183,7 +184,7 @@ void Add_Job(int *actual_number, int* last_number, vector<int> *sockets) {
             pbuf->pubseekpos (0,ios::in);
 
             while(ile_wyslane < size){
-                if (jobQueue.size() < 10){
+                if (jobQueue.size() < 100){
                     // set seek position to ile_wyslane
                     pbuf->pubseekpos (ile_wyslane,ios::in);
 
@@ -192,17 +193,18 @@ void Add_Job(int *actual_number, int* last_number, vector<int> *sockets) {
 
                     strncpy ( job.content, buffer, BUFSIZE );
 
-                    for (std::vector<int>::iterator it = (*sockets).begin() ; it != (*sockets).end(); ++it) {
+                    ile_wyslane += BUFSIZE;
+
+                    for (vector<int>::iterator it = (*sockets).begin() ; it != (*sockets).end(); ++it) {
                         job.socket = *it;
                         {
                             unique_lock<mutex> lock(Queue_Mutex);
                             jobQueue.push(job);
-                            //cout<<"nowy job "<<job.content<<endl;
                         }
                         condition.notify_one();
                     }
                 } else{
-                    this_thread::sleep_for(chrono::milliseconds(500));
+                    this_thread::sleep_for(chrono::milliseconds(1));
                 }
 
             }
@@ -210,7 +212,7 @@ void Add_Job(int *actual_number, int* last_number, vector<int> *sockets) {
             (*actual_number)++;
         }
         else{
-            this_thread::sleep_for(chrono::milliseconds(500));
+            this_thread::sleep_for(chrono::milliseconds(1));
         };
     }
 }
@@ -232,9 +234,8 @@ int main() {
     /***** Streaming threads *****/
 
     int Num_Threads = thread::hardware_concurrency();
-    //cout<<"Liczba wspieranych watkow: "<< Num_Threads << endl;
     vector<thread> pool;
-    //for(int i = 0; i < Num_Threads-3; i++)
+    //for(int i = 0; i < Num_Threads-2; i++)
     //{  pool.push_back(thread(Infinite_loop_function));}
 
 
@@ -278,7 +279,7 @@ int main() {
         //cout<<"Nowe polaczenie"<<endl;
         //sockets.push_back(*nClientSocket);
 
-        thread second (streamuj, nClientSocket);
+        thread second (streamuj, nClientSocket, &actual_number, &last_number);
         second.detach();
     }
 

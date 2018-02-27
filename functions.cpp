@@ -1,7 +1,7 @@
 #include "functions.h"
 
 /**************** TCP ****************/
-void streamuj(int* socket) {
+void streamuj(int* socket, int *actual_number, int* last_number) {
     int nClientSocket = *socket;
     //std::cout<<"[connection from " << inet_ntoa((struct in_addr)stClientAddr.sin_addr)<<std::endl;
     std::cout<<"Nowe polaczenie"<<std::endl;
@@ -10,93 +10,66 @@ void streamuj(int* socket) {
     filebuf *pbuf;
     ifstream sourcestr;
     long size;
-    char * buffer;
+    char buffer[BUFSIZE];
     long ile_wyslane = 0;
 
-    sourcestr.open("./Ghost Ship of Cannibal Rats (online-audio-converter.com).wav", ios::in | ios::binary);
-    if (!sourcestr.good()) {
-        cout<<"Blad otwarcia pliku zrodlowego"<<endl;
-        exit(EXIT_FAILURE);
-    }
+    while(true) {
+        if(*actual_number <= *last_number){
+            sourcestr.open("./audio/" + to_string(*actual_number) + ".wav", ios::in | ios::binary);
+            if (!sourcestr.good()) {
+                cout << "Blad otwarcia pliku zrodlowego" << endl;
+                exit(EXIT_FAILURE);
+            }
 
-    // get pointer to associated buffer object
-    pbuf=sourcestr.rdbuf();
+            // get pointer to associated buffer object
+            pbuf = sourcestr.rdbuf();
 
-    // get file size using buffer's members
-    size=pbuf->pubseekoff (0,ios::end,ios::in);
-    // set seek position to 0
-    pbuf->pubseekpos (0,ios::in);
+            // get file size using buffer's members
+            size = pbuf->pubseekoff(0, ios::end, ios::in);
+            // set seek position to 0
+            pbuf->pubseekpos(0, ios::in);
 
-    // allocate memory to contain file data
-    buffer=new char[BUFSIZE];
+            while (ile_wyslane < size) {
+                // set seek position to ile_wyslane
+                pbuf->pubseekpos(ile_wyslane, ios::in);
 
-    while(ile_wyslane < size/2){
-        // set seek position to ile_wyslane
-        pbuf->pubseekpos (ile_wyslane,ios::in);
+                // get file data
+                pbuf->sgetn(buffer, BUFSIZE);
 
-        // get file data
-        pbuf->sgetn (buffer,BUFSIZE);
+                ile_wyslane += write(nClientSocket, buffer, BUFSIZE);
+                if (ile_wyslane == -1) {
+                    cout << "Error during streaming " << endl;
+                    exit(EXIT_FAILURE);
+                }
+                if (ile_wyslane == 0) {
+                    cout << "Client disconnected " << endl;
+                    break;
+                }
 
-        ile_wyslane += write(nClientSocket, buffer, BUFSIZE);
-
-    }
-    sourcestr.close();
-
-    ile_wyslane = 0;
-
-    sourcestr.open("./audio/Wynik.wav", ios::in | ios::binary);
-    if (!sourcestr.good()) {
-        cout<<"Blad otwarcia pliku zrodlowego"<<endl;
-        exit(EXIT_FAILURE);
-    }
-
-    // get pointer to associated buffer object
-    pbuf=sourcestr.rdbuf();
-
-    // get file size using buffer's members
-    size=pbuf->pubseekoff (0,ios::end,ios::in);
-    // set seek position to 0
-    pbuf->pubseekpos (0,ios::in);
-
-    // allocate memory to contain file data
-    buffer=new char[BUFSIZE];
-
-    while(ile_wyslane < size){
-        // set seek position to ile_wyslane
-        pbuf->pubseekpos (ile_wyslane,ios::in);
-
-        // get file data
-        pbuf->sgetn (buffer,BUFSIZE);
-
-        ile_wyslane += write(nClientSocket, buffer, BUFSIZE);
-        if (ile_wyslane == -1){
-            cout<<"Error during streaming " << endl;
-            exit(EXIT_FAILURE);
+            }
+            sourcestr.close();
+            (*actual_number)++;
         }
-        if (ile_wyslane == 0){
-            cout<<"Client disconnected " << endl;
-            break;
-        }
-
+        else{
+            this_thread::sleep_for(chrono::milliseconds(10));
+        };
     }
-    sourcestr.close();
 
     close(nClientSocket);
 }
 
 void streamujj(Job job) {
-    int nClientSocket = job.socket;
     long ile_wyslane = 0;
 
     while(ile_wyslane < BUFSIZE){
-        ile_wyslane += write(nClientSocket, job.content+ile_wyslane, BUFSIZE-ile_wyslane);
+        ile_wyslane += write(job.socket, job.content+ile_wyslane, BUFSIZE-ile_wyslane);
         if (ile_wyslane == -1){
             cout<<"Error during streaming " << endl;
             exit(EXIT_FAILURE);
         }
         if (ile_wyslane == 0) {
             cout << "Client disconnected " << endl;
-            close(nClientSocket);
+            close(job.socket);
             break;
         }
     }

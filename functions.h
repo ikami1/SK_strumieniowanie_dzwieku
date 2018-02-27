@@ -54,7 +54,7 @@ queue<Job> jobQueue;
 mutex Queue_Mutex;
 
 /*** TCP ***/
-void streamuj(int* socket);
+void streamuj(int* socket, int *actual_number, int* last_number);
 void streamujj(Job job);
 
 void setUpOutputSocket (int* nSocket, sockaddr_in stAddr);
