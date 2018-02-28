@@ -43,8 +43,6 @@ public:
     }
 };
 
-mutex mu;
-
 
 /*** TCP ***/
 void streamuj(int* socket, int *actual_number, int* last_number);

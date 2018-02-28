@@ -17,10 +17,8 @@ void streamuj(int* socket, int *actual_number, int* last_number) {
     while(true) {
         if(*actual_number <= *last_number){
 
-            mu.lock();
             sourcestr.open("./audio/" + to_string(*actual_number) + ".wav", ios::in | ios::binary);
             local_number = *actual_number;
-            mu.unlock();
 
             if (!sourcestr.good()) {
                 cout << "Blad otwarcia pliku zrodlowego" << endl;
@@ -54,11 +52,9 @@ void streamuj(int* socket, int *actual_number, int* last_number) {
 
             }
             sourcestr.close();
-
-            mu.lock();
+            
             if(local_number == *actual_number)
                 (*actual_number)++;
-            mu.unlock();
         }
         else{
             this_thread::sleep_for(chrono::milliseconds(10));
