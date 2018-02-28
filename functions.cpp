@@ -12,10 +12,16 @@ void streamuj(int* socket, int *actual_number, int* last_number) {
     long size;
     char buffer[BUFSIZE];
     long ile_wyslane = 0;
+    int local_number;
 
     while(true) {
         if(*actual_number <= *last_number){
+
+            mu.lock();
             sourcestr.open("./audio/" + to_string(*actual_number) + ".wav", ios::in | ios::binary);
+            local_number = *actual_number;
+            mu.unlock();
+
             if (!sourcestr.good()) {
                 cout << "Blad otwarcia pliku zrodlowego" << endl;
                 exit(EXIT_FAILURE);
@@ -48,7 +54,11 @@ void streamuj(int* socket, int *actual_number, int* last_number) {
 
             }
             sourcestr.close();
-            (*actual_number)++;
+
+            mu.lock();
+            if(local_number == *actual_number)
+                (*actual_number)++;
+            mu.unlock();
         }
         else{
             this_thread::sleep_for(chrono::milliseconds(10));
@@ -56,23 +66,6 @@ void streamuj(int* socket, int *actual_number, int* last_number) {
     }
 
     close(nClientSocket);
-}
-
-void streamujj(Job job) {
-    long ile_wyslane = 0;
-
-    while(ile_wyslane < BUFSIZE){
-        ile_wyslane += write(job.socket, job.content+ile_wyslane, BUFSIZE-ile_wyslane);
-        if (ile_wyslane == -1){
-            cout<<"Error during streaming " << endl;
-            exit(EXIT_FAILURE);
-        }
-        if (ile_wyslane == 0) {
-            cout << "Client disconnected " << endl;
-            close(job.socket);
-            break;
-        }
-    }
 }
 
 void setUpOutputSocket (int* nSocket, sockaddr_in stAddr){

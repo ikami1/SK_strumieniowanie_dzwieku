@@ -145,98 +145,13 @@ void listenCommands (int* listenSocket, list<TitleOfAudio*>* listOfTitles, int* 
     close(*nClientSocket);
 }
 
-void Infinite_loop_function() {
-    Job job;
-    while (true) {
-        {
-            unique_lock<mutex> lock(Queue_Mutex);
-
-            condition.wait(lock, [] { return !jobQueue.empty(); });
-            job = jobQueue.front();
-            jobQueue.pop();
-        }
-        streamujj(job);
-    }
-}
-
-void Add_Job(int *actual_number, int* last_number, vector<int> *sockets) {
-    Job job;
-    while(true){
-        if(*actual_number <= *last_number && !sockets->empty()){
-            filebuf *pbuf;
-            ifstream sourcestr;
-            long size;
-            char buffer[BUFSIZE];
-            int ile_wyslane = 0;
-
-            sourcestr.open("./audio/" + to_string(*actual_number) + ".wav", ios::in | ios::binary);
-            if (!sourcestr.good()) {
-                cout<<"Blad otwarcia pliku zrodlowego"<<endl;
-                exit(EXIT_FAILURE);
-            }
-
-            // get pointer to associated buffer object
-            pbuf=sourcestr.rdbuf();
-
-            // get file size using buffer's members
-            size=pbuf->pubseekoff (0,ios::end,ios::in);
-            // set seek position to 0
-            pbuf->pubseekpos (0,ios::in);
-
-            while(ile_wyslane < size){
-                if (jobQueue.size() < 100){
-                    // set seek position to ile_wyslane
-                    pbuf->pubseekpos (ile_wyslane,ios::in);
-
-                    // get file data
-                    pbuf->sgetn (buffer,BUFSIZE);
-
-                    strncpy ( job.content, buffer, BUFSIZE );
-
-                    ile_wyslane += BUFSIZE;
-
-                    for (vector<int>::iterator it = (*sockets).begin() ; it != (*sockets).end(); ++it) {
-                        job.socket = *it;
-                        {
-                            unique_lock<mutex> lock(Queue_Mutex);
-                            jobQueue.push(job);
-                        }
-                        condition.notify_one();
-                    }
-                } else{
-                    this_thread::sleep_for(chrono::milliseconds(1));
-                }
-
-            }
-            sourcestr.close();
-            (*actual_number)++;
-        }
-        else{
-            this_thread::sleep_for(chrono::milliseconds(1));
-        };
-    }
-}
-
 int main() {
     int nSocket, inputSocket;
     socklen_t nTmp;
     struct sockaddr_in stAddr, stAddrInput, stClientAddr;
     list<TitleOfAudio*> listOfTitles;
-    vector<int> sockets;
 
     int actual_number = 1, last_number = 0;
-
-    /***** New jobs *****/
-
-    //thread jobs (Add_Job, &actual_number, &last_number, &sockets);
-    //jobs.detach();
-
-    /***** Streaming threads *****/
-
-    int Num_Threads = thread::hardware_concurrency();
-    vector<thread> pool;
-    //for(int i = 0; i < Num_Threads-2; i++)
-    //{  pool.push_back(thread(Infinite_loop_function));}
 
 
     /******************************************************************/
@@ -275,9 +190,6 @@ int main() {
             perror ("Can't create a connection's socket.");
             exit(EXIT_FAILURE);
         }
-
-        //cout<<"Nowe polaczenie"<<endl;
-        //sockets.push_back(*nClientSocket);
 
         thread second (streamuj, nClientSocket, &actual_number, &last_number);
         second.detach();

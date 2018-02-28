@@ -43,19 +43,11 @@ public:
     }
 };
 
-class Job{
-public:
-    int socket;
-    char content[BUFSIZE];
-};
+mutex mu;
 
-condition_variable condition;
-queue<Job> jobQueue;
-mutex Queue_Mutex;
 
 /*** TCP ***/
 void streamuj(int* socket, int *actual_number, int* last_number);
-void streamujj(Job job);
 
 void setUpOutputSocket (int* nSocket, sockaddr_in stAddr);
 void setUpInputSocket (int* nSocket, sockaddr_in stAddr);
